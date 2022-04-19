@@ -1,4 +1,6 @@
 wandb/
 results/
+cub/
+celebA/
 __pycache__/
 .ipynb_checkpoints/
