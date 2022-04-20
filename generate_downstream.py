@@ -146,6 +146,8 @@ def generate_downstream_commands(args):
                     + (f" --loss_type {loss_type}")
                     + (" --reweight_groups" if loss_type == "group_dro" else "")
                     + (f" --joint_dro_alpha {joint_dro_alpha}" if loss_type == "joint_dro" else "")
+                    + (" --include_probes" if args.include_probes else "")
+                    + (" --use_mislabeled_examples" if args.use_mislabeled_examples else "")
                 )
 
                 file.write(
@@ -157,6 +159,8 @@ def generate_downstream_commands(args):
                     + (f" --loss_type {loss_type}")
                     + (" --reweight_groups" if loss_type == "group_dro" else "")
                     + (f" --joint_dro_alpha {joint_dro_alpha}" if loss_type == "joint_dro" else "")
+                    + (" --include_probes" if args.include_probes else "")
+                    + (" --use_mislabeled_examples" if args.use_mislabeled_examples else "")
                 )
                 
                 file.write("\n")
@@ -225,6 +229,10 @@ if __name__ == "__main__":
         default=None,
         help="last epoch in training",
     )
+    
+    # SAS options
+    parser.add_argument("--include_probes", action="store_true", default=False)
+    parser.add_argument("--use_mislabeled_examples", action="store_true", default=False)
 
     args = parser.parse_args()
 

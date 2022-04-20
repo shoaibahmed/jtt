@@ -17,6 +17,8 @@ device = torch.device("cuda")
 import pandas as pd
 import os
 
+from probe_utils import test_tensor
+
 
 def run_epoch(
     epoch,
@@ -176,6 +178,7 @@ def train(
     epoch_offset,
     csv_name=None,
     wandb=None,
+    probes=None,
 ):
     model = model.to(device)
 
@@ -376,3 +379,12 @@ def train(
                     f"  {train_loss_computer.get_group_name(group_idx)}:\t"
                     f"adj = {train_loss_computer.adj[group_idx]:.3f}\n")
         logger.write("\n")
+        
+        # Evaluate if we should stop training based on probes
+        if probes is not None:
+            noisy_stats = test_tensor(model, probes["noisy"], probes["noisy_labels"], msg="Probe stats")
+            
+            accuracy_threshold = 20.
+            if noisy_stats["acc"] >= accuracy_threshold:
+                print(f"!! Accuracy on probe exceeded to {noisy_stats['acc']}% (threhold={accuracy_threshold}%). Stopping pretraining...")
+                break

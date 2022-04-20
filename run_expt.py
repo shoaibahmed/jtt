@@ -17,6 +17,9 @@ from utils import set_seed, Logger, CSVBatchLogger, log_args, get_model, hinge_l
 from train import train
 from data.folds import Subset, ConcatDataset
 
+from torchvision import transforms
+from probe_utils import CustomTensorDataset
+
 
 def main(args):
     if args.wandb:
@@ -110,6 +113,75 @@ def main(args):
     #########################################################################
     #########################################################################
     #########################################################################
+    
+    probes = None
+    if args.include_probes:
+        if args.dataset != "CUB":
+            raise NotImplementedError("Augmentations for other dataset have not been included...")
+        
+        print(">>>> Generating probes to be combined with the original dataset for training...")
+        probes = {}
+        tensor_shape = (3, 224, 224)  # Works for resnet-50 / wide-resnet-50
+        num_example_probes = 250
+        normalizer = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        num_classes = 2  # Just binary classification
+        device = torch.device("cuda")
+        
+        if args.use_mislabeled_examples:
+            raise NotImplementedError("Using mislabeled examples as probe will require removing these samples from the dataset...")
+        
+            print("Using examples from the dataset with random labels as probe...")
+            selected_indices = np.random.choice(np.arange(len(trainset)), size=num_example_probes, replace=False)
+            assert len(np.unique(selected_indices)) == len(selected_indices)
+            
+            transforms_clean = transforms.ToTensor()
+            images = [train_loader.sampler.data_source.data[i] for i in selected_indices]
+            probes["noisy"] = torch.stack([transforms_clean(x) for x in images], dim=0)
+            print("Selected image shape:", probes["noisy"].shape)
+            
+            # Remove these examples from the dataset
+            print(f"Dataset before deletion: {len(trainset)} / Dataloader size: {len(train_loader)}")
+            num_total_examples = len(trainset)
+            trainset.data = [trainset.data[i] for i in range(num_total_examples) if i not in selected_indices]
+            trainset.targets = [trainset.targets[i] for i in range(num_total_examples) if i not in selected_indices]
+            misclassified_instances = [misclassified_instances[i] for i in range(num_total_examples) if i not in selected_indices]
+            
+            # Reinitialize the dataloader to generate the right indices for sampler
+            train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=1, pin_memory=True)
+            print(f"Dataset after deletion: {len(trainset)} / Dataloader size: {len(train_loader)}")
+        
+        else:
+            print("Creating random examples with random labels as probe...")
+            probes["noisy"] = torch.empty(num_example_probes, *tensor_shape).uniform_(0., 1.)
+        
+        assert probes["noisy"].shape == (num_example_probes, *tensor_shape)
+        probes["noisy"] = normalizer(probes["noisy"]).to(device)
+        probes["noisy_labels"] = torch.randint(0, num_classes, (num_example_probes,)).to(device)
+        
+        probe_images = torch.cat([probes["noisy"]], dim=0)
+        probe_labels = torch.cat([probes["noisy_labels"]], dim=0)
+        probe_dataset_standard = CustomTensorDataset(probe_images.to("cpu"), [int(x) for x in probe_labels.to("cpu").numpy().tolist()], base_index=len(train_data))
+        print(f"Original dataset size: {len(train_data)} / Probes dataset size: {len(probe_dataset_standard)}")
+        train_set = torch.utils.data.ConcatDataset([train_data, probe_dataset_standard])
+        
+        probe_identity = ["noisy_probe" for _ in range(len(probe_images))]
+        dataset_probe_identity = ["train" for i in range(len(train_data))] + probe_identity
+        assert len(dataset_probe_identity) == len(train_set)
+        print("Probe dataset:", len(train_set), train_set[0][0].shape)
+        
+        # idx_dataset = IdxDataset(comb_trainset, dataset_probe_identity)
+        # idx_train_loader = torch.utils.data.DataLoader(idx_dataset, batch_size=args.batch_size, shuffle=True, num_workers=1, pin_memory=True)
+        # train_loader_w_probes = torch.utils.data.DataLoader(comb_trainset, batch_size=args.batch_size, shuffle=True, num_workers=1, pin_memory=True)
+        
+        # total_instances = len(idx_dataset)
+        # noisy_probe_instances = np.sum([1 if dataset_probe_identity[i] == "noisy_probe" else 0 for i in range(len(idx_dataset))])
+        # noisy_train_instances = np.sum([1 if dataset_probe_identity[i] == "train_noisy" else 0 for i in range(len(idx_dataset))])
+        # clean_train_instances = np.sum([1 if dataset_probe_identity[i] == "train_clean" else 0 for i in range(len(idx_dataset))])
+        # print(f"Total instances: {total_instances} / Noisy probe instances: {noisy_probe_instances} / Noisy train instances: {noisy_train_instances} / Clean train instances: {clean_train_instances}")
+    
+    #########################################################################
+    #########################################################################
+    #########################################################################
 
     loader_kwargs = {
         "batch_size": args.batch_size,
@@ -195,6 +267,7 @@ def main(args):
         epoch_offset=epoch_offset,
         csv_name=args.fold,
         wandb=wandb if args.wandb else None,
+        probes=probes,
     )
 
     train_csv_logger.close()
@@ -288,6 +361,10 @@ if __name__ == "__main__":
     parser.add_argument("--num_folds_per_sweep", type=int, default=5)
     parser.add_argument("--num_sweeps", type=int, default=4)
     parser.add_argument("--q", type=float, default=0.7)
+    
+    # SAS options
+    parser.add_argument("--include_probes", action="store_true", default=False)
+    parser.add_argument("--use_mislabeled_examples", action="store_true", default=False)
 
     parser.add_argument(
         "--metadata_csv_name",
@@ -306,6 +383,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     
+    assert not args.include_probes or args.up_weight == 0.
     if args.model.startswith("bert"): # and args.model != "bert": 
         if args.use_bert_params:
             print("\n"*5, f"Using bert params", "\n"*5)
