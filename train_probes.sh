@@ -1,7 +1,7 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=1
 
-python generate_downstream.py --exp_name CUB_probes_exp --dataset CUB --n_epochs 300 --lr 1e-5 --weight_decay 1.0 --method ERM --include_probes --no_wandb
+# python generate_downstream.py --exp_name CUB_probes_exp --dataset CUB --n_epochs 300 --lr 1e-5 --weight_decay 1.0 --method ERM --include_probes --no_wandb
 
 bash results/CUB/CUB_probes_exp/ERM_upweight_0_epochs_300_lr_1e-05_weight_decay_1.0/job.sh
 

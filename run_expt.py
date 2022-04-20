@@ -18,7 +18,7 @@ from train import train
 from data.folds import Subset, ConcatDataset
 
 from torchvision import transforms
-from probe_utils import CustomTensorDataset
+from probe_utils import CustomTensorDataset, CustomConcatDataset, CustomDatasetWrapper
 
 
 def main(args):
@@ -122,7 +122,7 @@ def main(args):
         print(">>>> Generating probes to be combined with the original dataset for training...")
         probes = {}
         tensor_shape = (3, 224, 224)  # Works for resnet-50 / wide-resnet-50
-        num_example_probes = 250
+        num_example_probes = 25  # Only a small number of probes
         normalizer = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         num_classes = 2  # Just binary classification
         device = torch.device("cuda")
@@ -162,12 +162,16 @@ def main(args):
         probe_labels = torch.cat([probes["noisy_labels"]], dim=0)
         probe_dataset_standard = CustomTensorDataset(probe_images.to("cpu"), [int(x) for x in probe_labels.to("cpu").numpy().tolist()], base_index=len(train_data))
         print(f"Original dataset size: {len(train_data)} / Probes dataset size: {len(probe_dataset_standard)}")
-        train_set = torch.utils.data.ConcatDataset([train_data, probe_dataset_standard])
+        train_set = CustomConcatDataset(train_data, probe_dataset_standard)
         
         probe_identity = ["noisy_probe" for _ in range(len(probe_images))]
         dataset_probe_identity = ["train" for i in range(len(train_data))] + probe_identity
-        assert len(dataset_probe_identity) == len(train_set)
+        assert len(dataset_probe_identity) == len(train_set), f"{len(dataset_probe_identity)} != {len(train_set)}"
         print("Probe dataset:", len(train_set), train_set[0][0].shape)
+        
+        # TODO: Replace with the original combined dataset
+        train_data = train_set  # Use the combined dataset for training
+        # train_data = CustomDatasetWrapper(train_data, probe_dataset_standard)  # For debugging purposes
         
         # idx_dataset = IdxDataset(comb_trainset, dataset_probe_identity)
         # idx_train_loader = torch.utils.data.DataLoader(idx_dataset, batch_size=args.batch_size, shuffle=True, num_workers=1, pin_memory=True)
