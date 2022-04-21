@@ -122,7 +122,7 @@ def main(args):
         print(">>>> Generating probes to be combined with the original dataset for training...")
         probes = {}
         tensor_shape = (3, 224, 224)  # Works for resnet-50 / wide-resnet-50
-        num_example_probes = 25  # Only a small number of probes
+        num_example_probes = 10  # Only a small number of probes
         normalizer = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         num_classes = 2  # Just binary classification
         device = torch.device("cuda")
@@ -158,8 +158,21 @@ def main(args):
         probes["noisy"] = normalizer(probes["noisy"]).to(device)
         probes["noisy_labels"] = torch.randint(0, num_classes, (num_example_probes,)).to(device)
         
-        probe_images = torch.cat([probes["noisy"]], dim=0)
-        probe_labels = torch.cat([probes["noisy_labels"]], dim=0)
+        # Replace the instances based on the number of replications defined
+        num_replications = 5
+        if num_replications > 1:
+            print("Replicating the instances by a factor of", num_replications)
+            print("Size before replication:", len(probes["noisy_labels"]))
+            indices = [i for _ in range(num_replications) for i in range(len(probes["noisy"]))]
+            probes["noisy"] = torch.stack([probes["noisy"][i] for i in indices], dim=0)
+            probes["noisy_labels"] = torch.tensor([probes["noisy_labels"][i] for i in indices]).to(torch.int64).to(device)
+            print("Size after replication:", len(probes["noisy_labels"]))
+        
+        assert len(probes["noisy"].shape) == 4
+        assert len(probes["noisy_labels"].shape) == 1
+        
+        probe_images = probes["noisy"]  # torch.cat([probes["noisy"]], dim=0)
+        probe_labels = probes["noisy_labels"]  # torch.cat([probes["noisy_labels"]], dim=0)
         probe_dataset_standard = CustomTensorDataset(probe_images.to("cpu"), [int(x) for x in probe_labels.to("cpu").numpy().tolist()], base_index=len(train_data))
         print(f"Original dataset size: {len(train_data)} / Probes dataset size: {len(probe_dataset_standard)}")
         train_set = CustomConcatDataset(train_data, probe_dataset_standard)
