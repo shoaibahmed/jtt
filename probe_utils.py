@@ -11,7 +11,8 @@ class CustomTensorDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         # Need to return x, y, g, index
         group = 0  # Assign a random group to these samples -- maybe group 0 which is the majority group
-        dataset_index = index + self.base_index
+        # dataset_index = index + self.base_index
+        dataset_index = -1  # return -1 so that we can identify these instances immediately
         return self.x[index], self.y[index], group, dataset_index
 
     def __len__(self):
@@ -42,6 +43,10 @@ class CustomConcatDataset(torch.utils.data.ConcatDataset):
         self.n_groups = self.dataset.n_groups
         self.group_str = self.dataset.group_str
         self.group_counts = self.dataset.group_counts
+        
+        self.num_probes = len(dataset_probe_identity)
+        self.num_orig_examples = len(dataset)
+        assert len(self) == self.num_probes + self.num_orig_examples
 
 
 class CustomDatasetWrapper(torch.utils.data.Dataset):

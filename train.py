@@ -17,7 +17,7 @@ device = torch.device("cuda")
 import pandas as pd
 import os
 
-from probe_utils import test_tensor
+from probe_utils import CustomConcatDataset, test_tensor
 
 
 def run_epoch(
@@ -107,7 +107,7 @@ def run_epoch(
             
             for class_ind in range(probs.shape[1]):
                 output_df[f"pred_prob_{run_name}_{class_ind}"] = probs[:, class_ind]
-
+            
             loss_main = loss_computer.loss(outputs, y, g, is_training)
 
             if is_training:
@@ -139,6 +139,29 @@ def run_epoch(
                     wandb.log(wandb_stats)
 
         if run_name is not None:
+            # TODO: Remove everything which belongs to the probes
+            if isinstance(loader.dataset, CustomConcatDataset):
+                print(f"Probes found in the {'training ' if is_training else ''}dataset...")
+                assert len(indices) == len(loader.dataset), f"{indices.shape} != {len(loader.dataset)}"
+                assert np.sum(indices == -1) == loader.dataset.num_probes, f"Indicies == -1: {np.sum(indices == -1)} / Probe examples: {loader.dataset.num_probes}"
+                keep_mask = indices != -1
+                assert np.sum(keep_mask) == loader.dataset.num_orig_examples
+                
+                assert acc_y_pred.dtype == acc_y_true.dtype == indices.dtype
+                
+                output_df = pd.DataFrame()
+                output_df[f"y_pred_{run_name}"] = np.array([acc_y_pred[i] for i in range(len(acc_y_pred)) if keep_mask[i]], dtype=acc_y_pred.dtype)
+                output_df[f"y_true_{run_name}"] = np.array([acc_y_true[i] for i in range(len(acc_y_true)) if keep_mask[i]], dtype=acc_y_true.dtype)
+                output_df[f"indices_{run_name}"] = np.array([indices[i] for i in range(len(indices)) if keep_mask[i]], dtype=indices.dtype)
+                
+                prev_probs_shape = probs.shape[1]
+                probs = np.stack([probs[i, :] for i in range(len(probs)) if keep_mask[i]], axis=0)
+                assert len(probs.shape) == 2
+                assert probs.shape[1] == prev_probs_shape
+                
+                for class_ind in range(probs.shape[1]):
+                    output_df[f"pred_prob_{run_name}_{class_ind}"] = probs[:, class_ind]
+            
             save_dir = "/".join(csv_logger.path.split("/")[:-1])
             output_df.to_csv(
                 os.path.join(save_dir, 

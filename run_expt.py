@@ -124,7 +124,7 @@ def main(args):
         tensor_shape = (3, 224, 224)  # Works for resnet-50 / wide-resnet-50
         num_example_probes = 10  # Only a small number of probes
         normalizer = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        num_classes = 2  # Just binary classification
+        num_classes = train_data.n_classes  # Just binary classification
         device = torch.device("cuda")
         
         if args.use_mislabeled_examples:
@@ -159,7 +159,7 @@ def main(args):
         probes["noisy_labels"] = torch.randint(0, num_classes, (num_example_probes,)).to(device)
         
         # Replace the instances based on the number of replications defined
-        num_replications = 5
+        num_replications = 25
         if num_replications > 1:
             print("Replicating the instances by a factor of", num_replications)
             print("Size before replication:", len(probes["noisy_labels"]))
