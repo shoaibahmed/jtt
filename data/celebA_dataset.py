@@ -28,6 +28,13 @@ class CelebADataset(ConfounderDataset):
         self.confounder_names = confounder_names
         self.augment_data = augment_data
         self.model_type = model_type
+        
+        # SAS: Create the CSV file
+        df1 = pd.read_csv(os.path.join(self.root_dir, "data", "list_eval_partition.csv"))
+        df2 = pd.read_csv(os.path.join(self.root_dir, "data", "list_attr_celeba.csv"))
+        merged_df = pd.merge(df1, df2)
+        merged_df["split"] = merged_df["partition"]
+        merged_df.to_csv(os.path.join(self.root_dir, "data", metadata_csv_name), header=True, index=False)
 
         # Read in attributes
         self.attrs_df = pd.read_csv(
