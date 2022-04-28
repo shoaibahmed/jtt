@@ -37,7 +37,10 @@ def main(args):
     original_df = pd.read_csv(metadata_path)
     original_train_df = original_df[original_df["split"] == 0]
     if dataset == "CelebA" or dataset == "jigsaw" or dataset == "MultiNLI":
-        original_train_df = original_train_df.drop(['Unnamed: 0'], axis=1)
+        if "Unnamed: 0" in original_train_df in original_train_df.columns:
+            original_train_df = original_train_df.drop(['Unnamed: 0'], axis=1)
+        else:
+            print("!! Warning: Unnamed:0 column not found which was expected by the original code...")
 
     merged_csv = original_train_df.join(train_df.set_index(f"indices_None_epoch_{final_epoch}_val"))
     if dataset == "CUB":
