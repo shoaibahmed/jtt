@@ -1,0 +1,159 @@
+------------------------------------------------------------
+------------------------ Waterbirds ------------------------
+------------------------------------------------------------
+
+
+------------------------ JTT ------------------------
+
+Downstream Accuracies for JTT_upweight_50_epochs_300_lr_1e-05_weight_decay_1.0 with 4 groups.
+Val Robust Worst Group val   acc (early stop at epoch 20): 86.7
+Val Robust Worst Group test  acc (early stop at epoch 20): 85.0
+Val Average Acc val   acc (early stop at epoch 20): 89.1
+Val Average Acc test  acc (early stop at epoch 20): 88.1
+group 0 acc val   acc (early stop at epoch 20): 91.2
+group 0 acc test  acc (early stop at epoch 20): 90.0
+group 1 acc val   acc (early stop at epoch 20): 86.7
+group 1 acc test  acc (early stop at epoch 20): 85.0
+group 2 acc val   acc (early stop at epoch 20): 88.0
+group 2 acc test  acc (early stop at epoch 20): 91.0
+group 3 acc val   acc (early stop at epoch 20): 91.0
+group 3 acc test  acc (early stop at epoch 20): 89.7
+
+
+
+
+problem with metadata_aug.csv
+(<class 'NotADirectoryError'>, NotADirectoryError(20, 'Not a directory'), <traceback object at 0x7f9dfa7c0c80>)
+Downstream Accuracies for JTT_upweight_100_epochs_300_lr_1e-05_weight_decay_1.0 with 4 groups.
+Val Robust Worst Group val   acc (early stop at epoch 21): 87.8
+Val Robust Worst Group test  acc (early stop at epoch 21): 86.0
+Val Average Acc val   acc (early stop at epoch 21): 89.6
+Val Average Acc test  acc (early stop at epoch 21): 89.3
+group 0 acc val   acc (early stop at epoch 21): 91.0
+group 0 acc test  acc (early stop at epoch 21): 92.2
+group 1 acc val   acc (early stop at epoch 21): 87.8
+group 1 acc test  acc (early stop at epoch 21): 86.0
+group 2 acc val   acc (early stop at epoch 21): 89.5
+group 2 acc test  acc (early stop at epoch 21): 89.7
+group 3 acc val   acc (early stop at epoch 21): 91.0
+group 3 acc test  acc (early stop at epoch 21): 90.2
+
+
+
+
+problem with val_accuracies.txt
+(<class 'NotADirectoryError'>, NotADirectoryError(20, 'Not a directory'), <traceback object at 0x7f9dfa7ffbc0>)
+Downstream Accuracies for JTT_upweight_20_epochs_300_lr_1e-05_weight_decay_1.0 with 4 groups.
+Val Robust Worst Group val   acc (early stop at epoch 87): 82.0
+Val Robust Worst Group test  acc (early stop at epoch 87): 81.3
+Val Average Acc val   acc (early stop at epoch 87): 90.5
+Val Average Acc test  acc (early stop at epoch 87): 90.6
+group 0 acc val   acc (early stop at epoch 87): 97.6
+group 0 acc test  acc (early stop at epoch 87): 98.4
+group 1 acc val   acc (early stop at epoch 87): 85.0
+group 1 acc test  acc (early stop at epoch 87): 84.6
+group 2 acc val   acc (early stop at epoch 87): 82.0
+group 2 acc test  acc (early stop at epoch 87): 81.3
+group 3 acc val   acc (early stop at epoch 87): 93.2
+group 3 acc test  acc (early stop at epoch 87): 93.9
+
+
+
+------------------------ JTT w/ probes ------------------------
+
+Downstream Accuracies for JTT_upweight_50_epochs_300_lr_1e-05_weight_decay_1.0 with 4 groups.
+Val Robust Worst Group val   acc (early stop at epoch 20): 88.0
+Val Robust Worst Group test  acc (early stop at epoch 20): 88.1
+Val Average Acc val   acc (early stop at epoch 20): 89.4
+Val Average Acc test  acc (early stop at epoch 20): 89.3
+group 0 acc val   acc (early stop at epoch 20): 90.1
+group 0 acc test  acc (early stop at epoch 20): 90.3
+group 1 acc val   acc (early stop at epoch 20): 88.6
+group 1 acc test  acc (early stop at epoch 20): 88.1
+group 2 acc val   acc (early stop at epoch 20): 88.0
+group 2 acc test  acc (early stop at epoch 20): 89.9
+group 3 acc val   acc (early stop at epoch 20): 91.0
+group 3 acc test  acc (early stop at epoch 20): 88.9
+
+
+
+
+problem with metadata_aug.csv
+(<class 'NotADirectoryError'>, NotADirectoryError(20, 'Not a directory'), <traceback object at 0x7fcb89f7fb40>)
+Downstream Accuracies for JTT_upweight_100_epochs_300_lr_1e-05_weight_decay_1.0 with 4 groups.
+Val Robust Worst Group val   acc (early stop at epoch 20): 89.5
+Val Robust Worst Group test  acc (early stop at epoch 20): 88.2
+Val Average Acc val   acc (early stop at epoch 20): 89.5
+Val Average Acc test  acc (early stop at epoch 20): 89.3
+group 0 acc val   acc (early stop at epoch 20): 89.5
+group 0 acc test  acc (early stop at epoch 20): 89.7
+group 1 acc val   acc (early stop at epoch 20): 89.5
+group 1 acc test  acc (early stop at epoch 20): 88.6
+group 2 acc val   acc (early stop at epoch 20): 89.5
+group 2 acc test  acc (early stop at epoch 20): 91.1
+group 3 acc val   acc (early stop at epoch 20): 89.5
+group 3 acc test  acc (early stop at epoch 20): 88.2
+
+
+
+
+problem with val_accuracies.txt
+(<class 'NotADirectoryError'>, NotADirectoryError(20, 'Not a directory'), <traceback object at 0x7fcb89fc2d80>)
+Downstream Accuracies for JTT_upweight_20_epochs_300_lr_1e-05_weight_decay_1.0 with 4 groups.
+Val Robust Worst Group val   acc (early stop at epoch 101): 76.7
+Val Robust Worst Group test  acc (early stop at epoch 101): 76.2
+Val Average Acc val   acc (early stop at epoch 101): 90.3
+Val Average Acc test  acc (early stop at epoch 101): 91.2
+group 0 acc val   acc (early stop at epoch 101): 98.1
+group 0 acc test  acc (early stop at epoch 101): 98.6
+group 1 acc val   acc (early stop at epoch 101): 86.1
+group 1 acc test  acc (early stop at epoch 101): 87.8
+group 2 acc val   acc (early stop at epoch 101): 76.7
+group 2 acc test  acc (early stop at epoch 101): 76.2
+group 3 acc val   acc (early stop at epoch 101): 91.7
+group 3 acc test  acc (early stop at epoch 101): 92.7
+
+
+
+
+
+--------------------------------------------------------
+------------------------ CelebA ------------------------
+--------------------------------------------------------
+
+
+------------------------ JTT ------------------------
+
+
+Downstream Accuracies for JTT_upweight_50_epochs_50_lr_1e-05_weight_decay_0.1 with 4 groups.
+Val Robust Worst Group val   acc (early stop at epoch 3): 85.6
+Val Robust Worst Group test  acc (early stop at epoch 3): 77.2
+Val Average Acc val   acc (early stop at epoch 3): 89.9
+Val Average Acc test  acc (early stop at epoch 3): 90.1
+group 0 acc val   acc (early stop at epoch 3): 85.6
+group 0 acc test  acc (early stop at epoch 3): 87.7
+group 1 acc val   acc (early stop at epoch 3): 94.9
+group 1 acc test  acc (early stop at epoch 3): 94.4
+group 2 acc val   acc (early stop at epoch 3): 88.2
+group 2 acc test  acc (early stop at epoch 3): 87.3
+group 3 acc val   acc (early stop at epoch 3): 85.7
+group 3 acc test  acc (early stop at epoch 3): 77.2
+
+
+
+
+------------------------ JTT w/ probes ------------------------
+
+
+Val Robust Worst Group val   acc (early stop at epoch 32): 82.0
+Val Robust Worst Group test  acc (early stop at epoch 32): 79.4
+Val Average Acc val   acc (early stop at epoch 32): 88.8
+Val Average Acc test  acc (early stop at epoch 32): 89.1
+group 0 acc val   acc (early stop at epoch 32): 82.0
+group 0 acc test  acc (early stop at epoch 32): 85.2
+group 1 acc val   acc (early stop at epoch 32): 93.5
+group 1 acc test  acc (early stop at epoch 32): 92.8
+group 2 acc val   acc (early stop at epoch 32): 95.5
+group 2 acc test  acc (early stop at epoch 32): 94.2
+group 3 acc val   acc (early stop at epoch 32): 82.4
+group 3 acc test  acc (early stop at epoch 32): 79.4

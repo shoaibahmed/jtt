@@ -116,7 +116,7 @@ def main(args):
     
     probes = None
     if args.include_probes:
-        if args.dataset != "CUB":
+        if args.dataset not in ["CUB", "CelebA"]:
             raise NotImplementedError("Augmentations for other dataset have not been included...")
         
         print(">>>> Generating probes to be combined with the original dataset for training...")
