@@ -59,7 +59,7 @@ group 3 acc test  acc (early stop at epoch 87): 93.9
 
 
 
------------------------- JTT w/ probes ------------------------
+------------------------ JTT w/ probes (early-stop after 79th epoch) ------------------------
 
 Downstream Accuracies for JTT_upweight_50_epochs_300_lr_1e-05_weight_decay_1.0 with 4 groups.
 Val Robust Worst Group val   acc (early stop at epoch 20): 88.0
@@ -114,6 +114,57 @@ group 3 acc val   acc (early stop at epoch 101): 91.7
 group 3 acc test  acc (early stop at epoch 101): 92.7
 
 
+
+------------------------ JTT w/ corrupted probes (early-stop after 29th epoch) -- acc threshold: 80% ------------------------
+
+
+Downstream Accuracies for JTT_upweight_50_epochs_300_lr_1e-05_weight_decay_1.0 with 4 groups.
+Val Robust Worst Group val   acc (early stop at epoch 29): 86.3
+Val Robust Worst Group test  acc (early stop at epoch 29): 84.2
+Val Average Acc val   acc (early stop at epoch 29): 89.8
+Val Average Acc test  acc (early stop at epoch 29): 89.8
+group 0 acc val   acc (early stop at epoch 29): 93.4
+group 0 acc test  acc (early stop at epoch 29): 94.1
+group 1 acc val   acc (early stop at epoch 29): 86.3
+group 1 acc test  acc (early stop at epoch 29): 84.2
+group 2 acc val   acc (early stop at epoch 29): 86.5
+group 2 acc test  acc (early stop at epoch 29): 89.9
+group 3 acc val   acc (early stop at epoch 29): 93.2
+group 3 acc test  acc (early stop at epoch 29): 94.4
+
+
+
+
+problem with metadata_aug.csv
+(<class 'NotADirectoryError'>, NotADirectoryError(20, 'Not a directory'), <traceback object at 0x7fba304b1d80>)
+Downstream Accuracies for JTT_upweight_100_epochs_300_lr_1e-05_weight_decay_1.0 with 4 groups.
+Val Robust Worst Group val   acc (early stop at epoch 18): 85.8
+Val Robust Worst Group test  acc (early stop at epoch 18): 85.0
+Val Average Acc val   acc (early stop at epoch 18): 88.5
+Val Average Acc test  acc (early stop at epoch 18): 88.4
+group 0 acc val   acc (early stop at epoch 18): 89.9
+group 0 acc test  acc (early stop at epoch 18): 89.8
+group 1 acc val   acc (early stop at epoch 18): 85.8
+group 1 acc test  acc (early stop at epoch 18): 85.0
+group 2 acc val   acc (early stop at epoch 18): 89.5
+group 2 acc test  acc (early stop at epoch 18): 91.3
+group 3 acc val   acc (early stop at epoch 18): 91.7
+group 3 acc test  acc (early stop at epoch 18): 92.4
+
+
+Downstream Accuracies for JTT_upweight_20_epochs_300_lr_1e-05_weight_decay_1.0 with 4 groups.
+Val Robust Worst Group val   acc (early stop at epoch 59): 82.0
+Val Robust Worst Group test  acc (early stop at epoch 59): 83.4
+Val Average Acc val   acc (early stop at epoch 59): 90.3
+Val Average Acc test  acc (early stop at epoch 59): 90.1
+group 0 acc val   acc (early stop at epoch 59): 97.2
+group 0 acc test  acc (early stop at epoch 59): 97.3
+group 1 acc val   acc (early stop at epoch 59): 84.5
+group 1 acc test  acc (early stop at epoch 59): 83.4
+group 2 acc val   acc (early stop at epoch 59): 82.0
+group 2 acc test  acc (early stop at epoch 59): 84.3
+group 3 acc val   acc (early stop at epoch 59): 94.7
+group 3 acc test  acc (early stop at epoch 59): 94.5
 
 
 
