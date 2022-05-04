@@ -122,44 +122,70 @@ def main(args):
         print(">>>> Generating probes to be combined with the original dataset for training...")
         probes = {}
         tensor_shape = (3, 224, 224)  # Works for resnet-50 / wide-resnet-50
-        num_example_probes = 10  # Only a small number of probes
+        
         normalizer = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         num_classes = train_data.n_classes  # Just binary classification
         device = torch.device("cuda")
         
         if args.use_mislabeled_examples:
-            raise NotImplementedError("Using mislabeled examples as probe will require removing these samples from the dataset...")
-        
-            print("Using examples from the dataset with random labels as probe...")
-            selected_indices = np.random.choice(np.arange(len(trainset)), size=num_example_probes, replace=False)
-            assert len(np.unique(selected_indices)) == len(selected_indices)
+            print("!! Warning: mislabaled examples has been replaced with corrupted inputs.")
+            print("This doesn't require removing examples from the dataset...")
+            num_replications = 1
+            num_example_probes = 250  # Only a small number of probes
             
-            transforms_clean = transforms.ToTensor()
-            images = [train_loader.sampler.data_source.data[i] for i in selected_indices]
-            probes["noisy"] = torch.stack([transforms_clean(x) for x in images], dim=0)
+            # raise NotImplementedError("Using mislabeled examples as probe will require removing these samples from the dataset...")
+        
+            # print("Using examples from the dataset with random labels as probe...")
+            # selected_indices = np.random.choice(np.arange(len(trainset)), size=num_example_probes, replace=False)
+            # assert len(np.unique(selected_indices)) == len(selected_indices)
+            
+            # transforms_clean = transforms.ToTensor()
+            # images = [train_loader.sampler.data_source.data[i] for i in selected_indices]
+            # probes["noisy"] = torch.stack([transforms_clean(x) for x in images], dim=0)
+            # print("Selected image shape:", probes["noisy"].shape)
+            
+            # # Remove these examples from the dataset
+            # print(f"Dataset before deletion: {len(trainset)} / Dataloader size: {len(train_loader)}")
+            # num_total_examples = len(trainset)
+            # trainset.data = [trainset.data[i] for i in range(num_total_examples) if i not in selected_indices]
+            # trainset.targets = [trainset.targets[i] for i in range(num_total_examples) if i not in selected_indices]
+            # misclassified_instances = [misclassified_instances[i] for i in range(num_total_examples) if i not in selected_indices]
+            
+            # # Reinitialize the dataloader to generate the right indices for sampler
+            # train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=1, pin_memory=True)
+            
+            print("Using examples from the dataset with corrupted inputs as probe...")
+            selected_indices = np.random.choice(np.arange(len(train_data)), size=num_example_probes, replace=False)
+            assert len(np.unique(selected_indices)) == len(selected_indices)
+            print(f"Total examples in the dataset: {len(train_data)} / Selected examples: {len(selected_indices)}")
+            
+            examples = [train_data[i] for i in selected_indices]
+            probes["noisy"] = torch.stack([x[0] for x in examples], dim=0)
             print("Selected image shape:", probes["noisy"].shape)
             
-            # Remove these examples from the dataset
-            print(f"Dataset before deletion: {len(trainset)} / Dataloader size: {len(train_loader)}")
-            num_total_examples = len(trainset)
-            trainset.data = [trainset.data[i] for i in range(num_total_examples) if i not in selected_indices]
-            trainset.targets = [trainset.targets[i] for i in range(num_total_examples) if i not in selected_indices]
-            misclassified_instances = [misclassified_instances[i] for i in range(num_total_examples) if i not in selected_indices]
+            # Add noise to examples
+            noise_std = 0.1
+            min_val, max_val = probes["noisy"].min(), probes["noisy"].max()
+            range = max_val - min_val
+            noise_level = noise_std * range
             
-            # Reinitialize the dataloader to generate the right indices for sampler
-            train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=1, pin_memory=True)
-            print(f"Dataset after deletion: {len(trainset)} / Dataloader size: {len(train_loader)}")
+            print(f"Min val: {min_val} / Max val: {max_val} / Range: {range} / Noise level: {noise_level}")
+            noise_tensor = torch.randn_like(probes["noisy"]) * noise_level
+            probes["noisy"] = torch.clamp(probes["noisy"] + noise_tensor, min_val, max_val)
+            
+            probes["noisy_labels"] = torch.tensor([x[1] for x in examples]).to(torch.int64).to(device)
         
         else:
             print("Creating random examples with random labels as probe...")
+            num_example_probes = 10  # Only a small number of probes
+            num_replications = 25
             probes["noisy"] = torch.empty(num_example_probes, *tensor_shape).uniform_(0., 1.)
+            probes["noisy_labels"] = torch.randint(0, num_classes, (num_example_probes,)).to(device)
         
         assert probes["noisy"].shape == (num_example_probes, *tensor_shape)
         probes["noisy"] = normalizer(probes["noisy"]).to(device)
-        probes["noisy_labels"] = torch.randint(0, num_classes, (num_example_probes,)).to(device)
         
         # Replace the instances based on the number of replications defined
-        num_replications = 25
         if num_replications > 1:
             print("Replicating the instances by a factor of", num_replications)
             print("Size before replication:", len(probes["noisy_labels"]))
@@ -177,9 +203,9 @@ def main(args):
         print(f"Original dataset size: {len(train_data)} / Probes dataset size: {len(probe_dataset_standard)}")
         train_set = CustomConcatDataset(train_data, probe_dataset_standard)
         
-        probe_identity = ["noisy_probe" for _ in range(len(probe_images))]
-        dataset_probe_identity = ["train" for i in range(len(train_data))] + probe_identity
-        assert len(dataset_probe_identity) == len(train_set), f"{len(dataset_probe_identity)} != {len(train_set)}"
+        # probe_identity = ["noisy_probe" for _ in range(len(probe_images))]
+        # dataset_probe_identity = ["train" for i in range(len(train_data))] + probe_identity
+        # assert len(dataset_probe_identity) == len(train_set), f"{len(dataset_probe_identity)} != {len(train_set)}"
         print("Probe dataset:", len(train_set), train_set[0][0].shape)
         
         # TODO: Replace with the original combined dataset
