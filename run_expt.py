@@ -132,6 +132,7 @@ def main(args):
             print("This doesn't require removing examples from the dataset...")
             num_replications = 1
             num_example_probes = 250  # Only a small number of probes
+            remove_elements_from_original_dataset = False
             
             # raise NotImplementedError("Using mislabeled examples as probe will require removing these samples from the dataset...")
         
@@ -164,7 +165,7 @@ def main(args):
             print("Selected image shape:", probes["noisy"].shape)
             
             # Add noise to examples
-            noise_std = 0.1
+            noise_std = 0.2
             min_val, max_val = probes["noisy"].min(), probes["noisy"].max()
             range = max_val - min_val
             noise_level = noise_std * range
@@ -174,6 +175,13 @@ def main(args):
             probes["noisy"] = torch.clamp(probes["noisy"] + noise_tensor, min_val, max_val)
             
             probes["noisy_labels"] = torch.tensor([x[1] for x in examples]).to(torch.int64).to(device)
+            probes["threshold"] = 75.
+            
+            if remove_elements_from_original_dataset:
+                print("Removing the corrupted examples from the dataset...")
+                # Remove the selected examples from the original dataset
+                # self.filename_array, self.y_array, self.group_array, self.features_mat
+                train_data.remove_indices(selected_indices)
         
         else:
             print("Creating random examples with random labels as probe...")
@@ -181,6 +189,7 @@ def main(args):
             num_replications = 25
             probes["noisy"] = torch.empty(num_example_probes, *tensor_shape).uniform_(0., 1.)
             probes["noisy_labels"] = torch.randint(0, num_classes, (num_example_probes,)).to(device)
+            probes["threshold"] = 75.
         
         assert probes["noisy"].shape == (num_example_probes, *tensor_shape)
         probes["noisy"] = normalizer(probes["noisy"]).to(device)

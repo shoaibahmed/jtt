@@ -47,6 +47,11 @@ class Subset(torch.utils.data.Dataset):
             return label_array
         else:
             return self.label_array
+    
+    def remove_indices(self):
+        raise NotImplementedError
+        # Index error must have already changed :(
+        assert isinstance(self.indices, list)
 
 
 class ConcatDataset(torch.utils.data.ConcatDataset):

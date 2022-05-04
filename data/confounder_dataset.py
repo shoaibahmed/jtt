@@ -28,7 +28,22 @@ class ConfounderDataset(Dataset):
 
     def __len__(self):
         return len(self.filename_array)
-
+    
+    def remove_indices(self, indices):
+        num_el = len(self)
+        filename_array = [f for i, f in enumerate(self.filename_array) if i not in indices]
+        y_array = [y for i, y in enumerate(self.y_array) if i not in indices]
+        group_array = [g for i, g in enumerate(self.group_array) if i not in indices]
+        if model_attributes[self.model_type]["feature_type"] == "precomputed":
+            self.features_mat = self.features_mat[indices, :]
+            assert len(self.features_mat) == len(indices)
+        
+        assert (num_el - len(indices)) == len(filename_array) == len(y_array) == len(group_array)
+        self.filename_array = filename_array
+        self.y_array = y_array
+        self.group_array = group_array
+        print(f"Original dataset size: {num_el} / Indices size: {len(indices)} / New dataset size: {len(self)}")
+    
     def __getitem__(self, idx):
         y = self.y_array[idx]
         g = self.group_array[idx]

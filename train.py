@@ -407,7 +407,7 @@ def train(
         if probes is not None:
             noisy_stats = test_tensor(model, probes["noisy"], probes["noisy_labels"], msg="Probe stats")
             
-            accuracy_threshold = 75.  # Baseline accuracy is 50% since the task is binary classification
+            accuracy_threshold = probes["threshold"]  # Baseline accuracy is 50% since the task is binary classification
             if noisy_stats["acc"] >= accuracy_threshold:
                 print(f"!! Accuracy on probe exceeded to {noisy_stats['acc']}% (threhold={accuracy_threshold}%). Stopping pretraining...")
                 break
