@@ -48,10 +48,10 @@ class Subset(torch.utils.data.Dataset):
         else:
             return self.label_array
     
-    def remove_indices(self):
-        raise NotImplementedError
-        # Index error must have already changed :(
-        assert isinstance(self.indices, list)
+    def remove_indices(self, indices):
+        print("Set size before removing examples:", len(self.indices))
+        self.indices = np.array([self.indices[i] for i in range(len(self.indices)) if i not in indices])
+        print("Set size after removing examples:", len(self.indices))
 
 
 class ConcatDataset(torch.utils.data.ConcatDataset):

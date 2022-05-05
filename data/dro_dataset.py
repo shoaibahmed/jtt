@@ -44,6 +44,12 @@ class DRODataset(Dataset):
             return self.dataset.remove_indices(indices)
         else:
             raise NotImplementedError
+    
+    def get_indices(self):
+        if self.process_item is None:
+            return self.dataset.indices
+        else:
+            raise NotImplementedError
 
     def get_label_array(self):
         if self.process_item is None:
