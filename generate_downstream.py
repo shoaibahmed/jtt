@@ -258,6 +258,7 @@ if __name__ == "__main__":
         args.root_dir = "./"
         args.target = "Blond_Hair"
         args.confounder_name = "Male"
+        args.batch_size = 128
         args.n_epochs = 50
         args.model = "resnet50"
         args.memory = 30 if not args.memory else args.memory
