@@ -76,7 +76,8 @@ def main(args):
         probes = {}
         tensor_shape = (3, 224, 224)  # Works for resnet-50 / wide-resnet-50
         
-        normalizer = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+        normalizer = transforms.Normalize(mean, std)
         num_classes = train_data.n_classes  # Just binary classification
         device = torch.device("cuda")
         
@@ -99,7 +100,7 @@ def main(args):
             print("Selected image shape:", probes["noisy"].shape)
             
             # Add noise to examples
-            noise_std = 0.1
+            noise_std = 0.25  # 0.1 for CIFAR10 and 0.25 for ImageNet
             min_val, max_val = probes["noisy"].min(), probes["noisy"].max()
             range = max_val - min_val
             noise_level = noise_std * range
@@ -109,7 +110,13 @@ def main(args):
             probes["noisy"] = torch.clamp(probes["noisy"] + noise_tensor, min_val, max_val)
             
             probes["noisy_labels"] = torch.tensor([x[1] for x in examples]).to(torch.int64).to(device)
-            probes["threshold"] = 80.
+            probes["threshold"] = 75.
+            
+            # Write a couple of sample images
+            mean_t = torch.as_tensor(mean, dtype=probes["noisy"].dtype, device=probes["noisy"].device).view(1, -1, 1, 1)
+            std_t = torch.as_tensor(std, dtype=probes["noisy"].dtype, device=probes["noisy"].device).view(1, -1, 1, 1)
+            out = (probes["noisy"] * std_t) + mean_t
+            torchvision.utils.save_image(out[:9], f"test_corrupted_{args.dataset}_noise_{noise_std}.png", nrow=3)
             
             if remove_elements_from_original_dataset:
                 print("Removing the corrupted examples from the dataset...")
@@ -124,6 +131,11 @@ def main(args):
             probes["noisy"] = torch.empty(num_example_probes, *tensor_shape).uniform_(0., 1.)
             probes["noisy_labels"] = torch.randint(0, num_classes, (num_example_probes,)).to(device)
             probes["threshold"] = 75.
+            probes["noisy"] = normalizer(probes["noisy"])
+        
+        assert probes["noisy"].shape == (num_example_probes, *tensor_shape)
+        probes["noisy"] = probes["noisy"].to(device)
+    
     
     #########################################################################
     ###################### Prepare data for our method ######################
@@ -179,9 +191,6 @@ def main(args):
     if args.include_probes:
         if args.dataset not in ["CUB", "CelebA"]:
             raise NotImplementedError("Augmentations for other dataset have not been included...")
-        
-        assert probes["noisy"].shape == (num_example_probes, *tensor_shape)
-        probes["noisy"] = normalizer(probes["noisy"]).to(device)
         
         # Replace the instances based on the number of replications defined
         if num_replications > 1:

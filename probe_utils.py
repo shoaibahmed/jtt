@@ -84,7 +84,7 @@ def test_tensor(model, data, target, msg=None):
     
     test_acc = 100. * correct / total
     output_dict = dict(loss=test_loss, acc=test_acc, correct=correct, total=total, 
-                       loss_vals=loss_vals.detach().cpu().numpy())
+                       loss_vals=loss_vals.detach().cpu().numpy().tolist())
     
     if msg is not None:
         print(f"{msg} | Average loss: {test_loss:.4f} | Accuracy: {correct}/{total} ({test_acc:.2f}%)")

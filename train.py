@@ -14,8 +14,8 @@ from loss import LossComputer
 from pytorch_transformers import AdamW, WarmupLinearSchedule
 
 device = torch.device("cuda")
+import json
 import pandas as pd
-import os
 
 from probe_utils import CustomConcatDataset, test_tensor
 
@@ -406,8 +406,10 @@ def train(
         # Evaluate if we should stop training based on probes
         if probes is not None:
             noisy_stats = test_tensor(model, probes["noisy"], probes["noisy_labels"], msg="Probe stats")
+            # logger.write(json.dumps(noisy_stats))
             
             accuracy_threshold = probes["threshold"]  # Baseline accuracy is 50% since the task is binary classification
             if noisy_stats["acc"] >= accuracy_threshold:
-                print(f"!! Accuracy on probe exceeded to {noisy_stats['acc']}% (threhold={accuracy_threshold}%). Stopping pretraining...")
+                output_str = f"\n!! Accuracy on probe exceeded to {noisy_stats['acc']}% (threhold={accuracy_threshold}%). Stopping pretraining...\n"
+                logger.write(output_str)
                 break
