@@ -80,6 +80,7 @@ def main(args):
         normalizer = transforms.Normalize(mean, std)
         num_classes = train_data.n_classes  # Just binary classification
         device = torch.device("cuda")
+        probes["remove_probe_examples_from_logs"] = True
         
         if args.use_mislabeled_examples:
             print("!! Warning: mislabaled examples has been replaced with corrupted inputs.")
@@ -110,7 +111,10 @@ def main(args):
             probes["noisy"] = torch.clamp(probes["noisy"] + noise_tensor, min_val, max_val)
             
             probes["noisy_labels"] = torch.tensor([x[1] for x in examples]).to(torch.int64).to(device)
-            probes["threshold"] = 75.
+            probes["noisy_groups"] = torch.tensor([x[2] for x in examples]).to(torch.int64).to(device)
+            probes["noisy_dataset_index"] = torch.tensor([x[3] for x in examples]).to(torch.int64).to(device)
+            
+            probes["threshold"] = 80.
             
             # Write a couple of sample images
             mean_t = torch.as_tensor(mean, dtype=probes["noisy"].dtype, device=probes["noisy"].device).view(1, -1, 1, 1)
@@ -123,6 +127,9 @@ def main(args):
                 # Remove the selected examples from the original dataset
                 # self.filename_array, self.y_array, self.group_array, self.features_mat
                 train_data.remove_indices(selected_indices)
+                
+                # Probe examples should not be removed from the logs since they are real examples
+                probes["remove_probe_examples_from_logs"] = False
         
         else:
             print("Creating random examples with random labels as probe...")
@@ -130,6 +137,9 @@ def main(args):
             num_replications = 25
             probes["noisy"] = torch.empty(num_example_probes, *tensor_shape).uniform_(0., 1.)
             probes["noisy_labels"] = torch.randint(0, num_classes, (num_example_probes,)).to(device)
+            probes["noisy_group"] = torch.zeros((num_example_probes,), dtype=torch.int64).to(device)
+            probes["noisy_dataset_index"] = -1 * torch.ones((num_example_probes,), dtype=torch.int64).to(device)
+            
             probes["threshold"] = 75.
             probes["noisy"] = normalizer(probes["noisy"])
         
@@ -199,14 +209,24 @@ def main(args):
             indices = [i for _ in range(num_replications) for i in range(len(probes["noisy"]))]
             probes["noisy"] = torch.stack([probes["noisy"][i] for i in indices], dim=0)
             probes["noisy_labels"] = torch.tensor([probes["noisy_labels"][i] for i in indices]).to(torch.int64).to(device)
+            probes["noisy_group"] = torch.tensor([probes["noisy_group"][i] for i in indices]).to(torch.int64).to(device)
+            probes["noisy_dataset_index"] = torch.tensor([probes["noisy_dataset_index"][i] for i in indices]).to(torch.int64).to(device)
             print("Size after replication:", len(probes["noisy_labels"]))
         
         assert len(probes["noisy"].shape) == 4
         assert len(probes["noisy_labels"].shape) == 1
+        assert len(probes["noisy_group"].shape) == 1
+        assert len(probes["noisy_dataset_index"].shape) == 1
         
         probe_images = probes["noisy"]  # torch.cat([probes["noisy"]], dim=0)
         probe_labels = probes["noisy_labels"]  # torch.cat([probes["noisy_labels"]], dim=0)
-        probe_dataset_standard = CustomTensorDataset(probe_images.to("cpu"), [int(x) for x in probe_labels.to("cpu").numpy().tolist()], base_index=len(train_data))
+        probe_group = probes["noisy_group"]
+        probe_dataset_index = probes["noisy_dataset_index"]
+        
+        probe_dataset_standard = CustomTensorDataset(probe_images.to("cpu"), 
+                                                     [int(x) for x in probe_labels.to("cpu").numpy().tolist()],
+                                                     [int(x) for x in probe_group.to("cpu").numpy().tolist()],
+                                                     [int(x) for x in probe_dataset_index.to("cpu").numpy().tolist()])
         print(f"Original dataset size: {len(train_data)} / Probes dataset size: {len(probe_dataset_standard)}")
         train_set = CustomConcatDataset(train_data, probe_dataset_standard)
         

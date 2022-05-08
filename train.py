@@ -36,6 +36,7 @@ def run_epoch(
     csv_name=None,
     wandb_group=None,
     wandb=None,
+    probes=None,
 ):
     """
     scheduler is only used inside this function if model is bert.
@@ -140,7 +141,10 @@ def run_epoch(
 
         if run_name is not None:
             # TODO: Remove everything which belongs to the probes
-            if isinstance(loader.dataset, CustomConcatDataset):
+            remove_probe_examples_from_logs = True  # Should only be false when using corrupted inputs which are removed from the dataset
+            if probes is not None:
+                remove_probe_examples_from_logs = probes["remove_probe_examples_from_logs"]
+            if isinstance(loader.dataset, CustomConcatDataset) and remove_probe_examples_from_logs:
                 print(f"Probes found in the {'training ' if is_training else ''}dataset...")
                 assert len(indices) == len(loader.dataset), f"{indices.shape} != {len(loader.dataset)}"
                 assert np.sum(indices == -1) == loader.dataset.num_probes, f"Indicies == -1: {np.sum(indices == -1)} / Probe examples: {loader.dataset.num_probes}"
@@ -296,6 +300,7 @@ def train(
             scheduler=scheduler,
             wandb_group="train",
             wandb=wandb,
+            probes=probes,
         )
 
         logger.write(f"\nValidation:\n")

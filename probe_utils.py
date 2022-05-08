@@ -3,17 +3,17 @@ from torch import nn
 
 
 class CustomTensorDataset(torch.utils.data.Dataset):
-    def __init__(self, x: torch.Tensor, y: list, base_index: int) -> None:
+    def __init__(self, x: torch.Tensor, y: list, group: list, dataset_index: list) -> None:
         self.x = x
         self.y = y
-        self.base_index = base_index
+        self.group = group
+        self.dataset_index = dataset_index
 
     def __getitem__(self, index):
         # Need to return x, y, g, index
-        group = 0  # Assign a random group to these samples -- maybe group 0 which is the majority group
-        # dataset_index = index + self.base_index
-        dataset_index = -1  # return -1 so that we can identify these instances immediately
-        return self.x[index], self.y[index], group, dataset_index
+        # group = 0  # Assign a random group to these samples -- maybe group 0 which is the majority group
+        # dataset_index = -1  # return -1 so that we can identify these instances immediately
+        return self.x[index], self.y[index], self.group[index], self.dataset_index[index]
 
     def __len__(self):
         return self.x.size(0)
