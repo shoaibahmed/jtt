@@ -111,7 +111,7 @@ def main(args):
             probes["noisy"] = torch.clamp(probes["noisy"] + noise_tensor, min_val, max_val)
             
             probes["noisy_labels"] = torch.tensor([x[1] for x in examples]).to(torch.int64).to(device)
-            probes["noisy_groups"] = torch.tensor([x[2] for x in examples]).to(torch.int64).to(device)
+            probes["noisy_group"] = torch.tensor([x[2] for x in examples]).to(torch.int64).to(device)
             probes["noisy_dataset_index"] = torch.tensor([x[3] for x in examples]).to(torch.int64).to(device)
             
             probes["threshold"] = 80.
