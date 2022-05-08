@@ -6,7 +6,14 @@
 # JTT, this yields learning rate 1e-5 and l2 regularization 1e-1
 # Grid search: JTT yields T = 1 epoch and λup = 50
 
-export CUDA_VISIBLE_DEVICES=1
+# job_name=celebA-paper-reprod
+# srun -p A100 -K -N1 --ntasks-per-node=1 --gpus-per-task=1 --cpus-per-gpu=6 --mem=50G \
+#     --kill-on-bad-exit --job-name ${job_name} --nice=0 --time 3-00:00:00 \
+#     --container-mounts=/netscratch:/netscratch,/ds:/ds,/home/siddiqui:/home/siddiqui --container-image=/netscratch/enroot/nvcr.io_nvidia_pytorch_21.06-py3.sqsh \
+#     --container-workdir=`pwd` --container-mount-home --export="NCCL_SOCKET_IFNAME=bond,NCCL_IB_HCA=mlx5" \
+#     ./celebA_paper_reprod.sh > ./logs/${job_name}.log 2>&1 &
+
+export WANDB_MODE=offline
 
 python generate_downstream.py --exp_name CelebA_reproduce_paper --dataset CelebA --n_epochs 50 --lr 1e-5 --weight_decay 0.1 --method ERM
 
