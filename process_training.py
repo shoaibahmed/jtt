@@ -47,7 +47,8 @@ def main(args):
         merged_csv["spurious"] = merged_csv['y'] != merged_csv["place"]
     elif dataset == "CelebA":
         merged_csv = merged_csv.replace(-1, 0)
-        assert 0 == np.sum(merged_csv[merged_csv["split"] == 0]["Blond_Hair"] != merged_csv[merged_csv["split"] == 0][f"y_true_None_epoch_{final_epoch}_val"])
+        disagreement = np.sum(merged_csv[merged_csv["split"] == 0]["Blond_Hair"] != merged_csv[merged_csv["split"] == 0][f"y_true_None_epoch_{final_epoch}_val"])
+        assert 0 == disagreement, disagreement
         merged_csv["spurious"] = (merged_csv["Blond_Hair"] == merged_csv["Male"]) 
     elif dataset == "jigsaw":
         merged_csv["spurious"] = merged_csv["toxicity"] >= 0.5

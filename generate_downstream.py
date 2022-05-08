@@ -147,7 +147,8 @@ def generate_downstream_commands(args):
                     + (" --reweight_groups" if loss_type == "group_dro" else "")
                     + (f" --joint_dro_alpha {joint_dro_alpha}" if loss_type == "joint_dro" else "")
                     + (" --include_probes" if args.include_probes else "")
-                    + (" --use_mislabeled_examples" if args.use_mislabeled_examples else "")
+                    + (" --use_corrupted_examples" if args.use_corrupted_examples else "")
+                    + (f" --probe_acc_threshold {args.probe_acc_threshold}" if args.probe_acc_threshold is not None else "")
                 )
 
                 file.write(
@@ -160,7 +161,8 @@ def generate_downstream_commands(args):
                     + (" --reweight_groups" if loss_type == "group_dro" else "")
                     + (f" --joint_dro_alpha {joint_dro_alpha}" if loss_type == "joint_dro" else "")
                     + (" --include_probes" if args.include_probes else "")
-                    + (" --use_mislabeled_examples" if args.use_mislabeled_examples else "")
+                    + (" --use_corrupted_examples" if args.use_corrupted_examples else "")
+                    + (f" --probe_acc_threshold {args.probe_acc_threshold}" if args.probe_acc_threshold is not None else "")
                 )
                 
                 file.write("\n")
@@ -232,7 +234,8 @@ if __name__ == "__main__":
     
     # SAS options
     parser.add_argument("--include_probes", action="store_true", default=False)
-    parser.add_argument("--use_mislabeled_examples", action="store_true", default=False)
+    parser.add_argument("--use_corrupted_examples", action="store_true", default=False)
+    parser.add_argument("--probe_acc_threshold", action="store", type=float, default=None)
 
     args = parser.parse_args()
 

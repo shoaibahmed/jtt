@@ -82,9 +82,8 @@ def main(args):
         device = torch.device("cuda")
         probes["remove_probe_examples_from_logs"] = True
         
-        if args.use_mislabeled_examples:
-            print("!! Warning: mislabaled examples has been replaced with corrupted inputs.")
-            print("This doesn't require removing examples from the dataset...")
+        if args.use_corrupted_examples:
+            print(">> Using corrupted examples are probes...")
             num_replications = 1
             num_example_probes = 250  # Only a small number of probes
             remove_elements_from_original_dataset = True
@@ -114,7 +113,7 @@ def main(args):
             probes["noisy_group"] = torch.tensor([x[2] for x in examples]).to(torch.int64).to(device)
             probes["noisy_dataset_index"] = torch.tensor([x[3] for x in examples]).to(torch.int64).to(device)
             
-            probes["threshold"] = 80.
+            probes["threshold"] = 85.
             
             # Write a couple of sample images
             mean_t = torch.as_tensor(mean, dtype=probes["noisy"].dtype, device=probes["noisy"].device).view(1, -1, 1, 1)
@@ -123,7 +122,7 @@ def main(args):
             torchvision.utils.save_image(out[:9], f"test_corrupted_{args.dataset}_noise_{noise_std}.png", nrow=3)
             
             if remove_elements_from_original_dataset:
-                print("Removing the corrupted examples from the dataset...")
+                print("!! Removing the corrupted examples from the dataset...")
                 # Remove the selected examples from the original dataset
                 # self.filename_array, self.y_array, self.group_array, self.features_mat
                 train_data.remove_indices(selected_indices)
@@ -142,6 +141,11 @@ def main(args):
             
             probes["threshold"] = 75.
             probes["noisy"] = normalizer(probes["noisy"])
+        
+        if args.probe_acc_threshold:
+            probes["threshold"] = float(args.probe_acc_threshold)
+        assert 0. < probes["threshold"] < 100., probes["threshold"] 
+        print("Selected probe accuracy threshold:", probes["threshold"])
         
         assert probes["noisy"].shape == (num_example_probes, *tensor_shape)
         probes["noisy"] = probes["noisy"].to(device)
@@ -424,7 +428,8 @@ if __name__ == "__main__":
     
     # SAS options
     parser.add_argument("--include_probes", action="store_true", default=False)
-    parser.add_argument("--use_mislabeled_examples", action="store_true", default=False)
+    parser.add_argument("--use_corrupted_examples", action="store_true", default=False)
+    parser.add_argument("--probe_acc_threshold", action="store", type=float, default=None)
 
     parser.add_argument(
         "--metadata_csv_name",
