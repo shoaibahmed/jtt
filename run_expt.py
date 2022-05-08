@@ -78,6 +78,7 @@ def main(args):
         
         mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
         normalizer = transforms.Normalize(mean, std)
+        
         num_classes = train_data.n_classes  # Just binary classification
         device = torch.device("cuda")
         probes["remove_probe_examples_from_logs"] = True
@@ -99,12 +100,21 @@ def main(args):
             probes["noisy"] = torch.stack([x[0] for x in examples], dim=0)
             print("Selected image shape:", probes["noisy"].shape)
             
-            # Add noise to examples
+            # Define the noise level
             noise_std = 0.25  # 0.1 for CIFAR10 and 0.25 for ImageNet
             min_val, max_val = probes["noisy"].min(), probes["noisy"].max()
             range = max_val - min_val
             noise_level = noise_std * range
             
+            # Convert the mean and std to tensors
+            mean_t = torch.as_tensor(mean, dtype=probes["noisy"].dtype, device=probes["noisy"].device).view(1, -1, 1, 1)
+            std_t = torch.as_tensor(std, dtype=probes["noisy"].dtype, device=probes["noisy"].device).view(1, -1, 1, 1)
+
+            # Write original sample images
+            out = (probes["noisy"] * std_t) + mean_t
+            torchvision.utils.save_image(out[:9], f"test_original_{args.dataset}_noise_{noise_std}.png", nrow=3)
+            
+            # Add noise to examples
             print(f"Min val: {min_val} / Max val: {max_val} / Range: {range} / Noise level: {noise_level}")
             noise_tensor = torch.randn_like(probes["noisy"]) * noise_level
             probes["noisy"] = torch.clamp(probes["noisy"] + noise_tensor, min_val, max_val)
@@ -115,9 +125,7 @@ def main(args):
             
             probes["threshold"] = 85.
             
-            # Write a couple of sample images
-            mean_t = torch.as_tensor(mean, dtype=probes["noisy"].dtype, device=probes["noisy"].device).view(1, -1, 1, 1)
-            std_t = torch.as_tensor(std, dtype=probes["noisy"].dtype, device=probes["noisy"].device).view(1, -1, 1, 1)
+            # Write corrupted sample images
             out = (probes["noisy"] * std_t) + mean_t
             torchvision.utils.save_image(out[:9], f"test_corrupted_{args.dataset}_noise_{noise_std}.png", nrow=3)
             
