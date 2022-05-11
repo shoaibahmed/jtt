@@ -87,6 +87,7 @@ def main(args):
             print(">> Using corrupted examples are probes...")
             num_replications = 1
             num_example_probes = 250  # Only a small number of probes
+            print("Number of probe examples:", num_example_probes)
             remove_elements_from_original_dataset = True
             
             print("Using examples from the dataset with corrupted inputs as probe...")
@@ -103,8 +104,8 @@ def main(args):
             # Define the noise level
             noise_std = 0.25  # 0.1 for CIFAR10 and 0.25 for ImageNet
             min_val, max_val = probes["noisy"].min(), probes["noisy"].max()
-            range = max_val - min_val
-            noise_level = noise_std * range
+            val_range = max_val - min_val
+            noise_level = noise_std * val_range
             
             # Convert the mean and std to tensors
             mean_t = torch.as_tensor(mean, dtype=probes["noisy"].dtype, device=probes["noisy"].device).view(1, -1, 1, 1)
@@ -115,7 +116,7 @@ def main(args):
             torchvision.utils.save_image(out[:9], f"test_original_{args.dataset}_noise_{noise_std}.png", nrow=3)
             
             # Add noise to examples
-            print(f"Min val: {min_val} / Max val: {max_val} / Range: {range} / Noise level: {noise_level}")
+            print(f"Min val: {min_val} / Max val: {max_val} / Value range: {val_range} / Noise level: {noise_level}")
             noise_tensor = torch.randn_like(probes["noisy"]) * noise_level
             probes["noisy"] = torch.clamp(probes["noisy"] + noise_tensor, min_val, max_val)
             
