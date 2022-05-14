@@ -149,6 +149,7 @@ def generate_downstream_commands(args):
                     + (" --include_probes" if args.include_probes else "")
                     + (" --use_corrupted_examples" if args.use_corrupted_examples else "")
                     + (f" --probe_acc_threshold {args.probe_acc_threshold}" if args.probe_acc_threshold is not None else "")
+                    + (f" --seed {args.seed}" if args.seed is not None else "")
                 )
 
                 file.write(
@@ -163,6 +164,7 @@ def generate_downstream_commands(args):
                     + (" --include_probes" if args.include_probes else "")
                     + (" --use_corrupted_examples" if args.use_corrupted_examples else "")
                     + (f" --probe_acc_threshold {args.probe_acc_threshold}" if args.probe_acc_threshold is not None else "")
+                    + (f" --seed {args.seed}" if args.seed is not None else "")
                 )
                 
                 file.write("\n")
@@ -236,6 +238,7 @@ if __name__ == "__main__":
     parser.add_argument("--include_probes", action="store_true", default=False)
     parser.add_argument("--use_corrupted_examples", action="store_true", default=False)
     parser.add_argument("--probe_acc_threshold", action="store", type=float, default=None)
+    parser.add_argument("--seed", action="store", type=int, default=None)
 
     args = parser.parse_args()
 
