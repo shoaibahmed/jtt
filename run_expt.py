@@ -102,7 +102,7 @@ def main(args):
             print("Selected image shape:", probes["noisy"].shape)
             
             # Define the noise level
-            noise_std = 0.25  # 0.1 for CIFAR10 and 0.25 for ImageNet
+            noise_std = 0.1  # 0.1 for CIFAR10 and 0.25 for ImageNet
             min_val, max_val = probes["noisy"].min(), probes["noisy"].max()
             val_range = max_val - min_val
             noise_level = noise_std * val_range
@@ -318,7 +318,6 @@ def main(args):
     else:
         epoch_offset = 0
 
-    
     train_csv_logger = CSVBatchLogger(os.path.join(args.log_dir, f"train.csv"),
                                       train_data.n_groups,
                                       mode=mode)

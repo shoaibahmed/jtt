@@ -42,7 +42,7 @@ def run_epoch(
     scheduler is only used inside this function if model is bert.
     """
 
-    
+    ce_criterion = nn.CrossEntropyLoss(reduction='none')
     
     if is_training:
         model.train()
@@ -80,7 +80,6 @@ def run_epoch(
                 # outputs.shape: (batch_size, num_classes)
                 outputs = model(x)
 
-                
             output_df = pd.DataFrame()
 
             # Calculate stats
@@ -110,6 +109,14 @@ def run_epoch(
                 output_df[f"pred_prob_{run_name}_{class_ind}"] = probs[:, class_ind]
             
             loss_main = loss_computer.loss(outputs, y, g, is_training)
+            
+            with torch.no_grad():
+                per_ex_loss = ce_criterion(outputs, y)
+                if batch_idx == 0:
+                    loss_np_arr = per_ex_loss.detach().cpu().numpy()
+                else:
+                    loss_np_arr = np.concatenate([loss_np_arr, per_ex_loss.detach().cpu().numpy()])
+                output_df[f"loss_{run_name}"] = loss_np_arr
 
             if is_training:
                 if (args.model.startswith("bert") and args.use_bert_params): 
@@ -140,7 +147,8 @@ def run_epoch(
                     wandb.log(wandb_stats)
 
         if run_name is not None:
-            # TODO: Remove everything which belongs to the probes
+            # TODO: Include the loss values throughout the training process
+            # Remove everything which belongs to the probes
             remove_probe_examples_from_logs = True  # Should only be false when using corrupted inputs which are removed from the dataset
             if probes is not None:
                 remove_probe_examples_from_logs = probes["remove_probe_examples_from_logs"]
@@ -152,11 +160,13 @@ def run_epoch(
                 assert np.sum(keep_mask) == loader.dataset.num_orig_examples
                 
                 assert acc_y_pred.dtype == acc_y_true.dtype == indices.dtype
+                assert len(acc_y_pred) == len(acc_y_true) == len(indices) == len(loss_np_arr)
                 
                 output_df = pd.DataFrame()
                 output_df[f"y_pred_{run_name}"] = np.array([acc_y_pred[i] for i in range(len(acc_y_pred)) if keep_mask[i]], dtype=acc_y_pred.dtype)
                 output_df[f"y_true_{run_name}"] = np.array([acc_y_true[i] for i in range(len(acc_y_true)) if keep_mask[i]], dtype=acc_y_true.dtype)
                 output_df[f"indices_{run_name}"] = np.array([indices[i] for i in range(len(indices)) if keep_mask[i]], dtype=indices.dtype)
+                output_df[f"loss_{run_name}"] = np.array([loss_np_arr[i] for i in range(len(loss_np_arr)) if keep_mask[i]], dtype=indices.dtype)
                 
                 prev_probs_shape = probs.shape[1]
                 probs = np.stack([probs[i, :] for i in range(len(probs)) if keep_mask[i]], axis=0)
