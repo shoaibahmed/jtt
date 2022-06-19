@@ -85,19 +85,35 @@ def main(args):
     
     # Maps from target and group attribute to whether the example is majority or minority group example
     # 0 refers to majority while 1 refers to minority
-    label_map = {(0, 0): 0, (1, 1): 0, (0, 1): 1, (1, 0): 1}
+    # label_map = {(0, 0): 0, (1, 1): 0, (0, 1): 1, (1, 0): 1}
     
-    metadata_target = original_df["y"].to_numpy()
-    metadata_attrib = original_df["place"].to_numpy()
+    if dataset == "CUB":
+        # merged_csv["spurious"] = merged_csv['y'] != merged_csv["place"]
+        metadata_target = original_df["y"].to_numpy()
+        metadata_attrib = original_df["place"].to_numpy()
+        metadata_spurious = (metadata_target != metadata_attrib).astype(np.int64)
+        print("Number of minority group instances for CUB:", np.sum(metadata_spurious))
+    elif dataset == "CelebA":
+        # merged_csv = merged_csv.replace(-1, 0)
+        # disagreement = np.sum(merged_csv[merged_csv["split"] == 0]["Blond_Hair"] != merged_csv[merged_csv["split"] == 0][f"y_true_None_epoch_{final_epoch}_val"])
+        # assert 0 == disagreement, disagreement
+        # merged_csv["spurious"] = (merged_csv["Blond_Hair"] == merged_csv["Male"]) 
+        metadata_target = original_df["Blond_Hair"].to_numpy()
+        metadata_attrib = original_df["Male"].to_numpy()
+        metadata_spurious = (metadata_target == metadata_attrib).astype(np.int64)
+        print("Number of minority group instances for CelebA:", np.sum(metadata_spurious))
+    else: 
+        raise NotImplementedError
+    
     metadata_split = original_df["split"].to_numpy()
     print(len(metadata_target), len(metadata_attrib), len(metadata_split))
 
     val_data_np = np.stack([loss_vals_np[i] for i in range(len(loss_vals_np)) if metadata_split[i] == 1], axis=0).astype(np.float32)
-    val_data_np_targets = np.array([label_map[(metadata_target[i], metadata_attrib[i])] for i in range(len(loss_vals_np)) if metadata_split[i] == 1]).astype(np.int64)
+    val_data_np_targets = np.array([metadata_spurious[i] for i in range(len(loss_vals_np)) if metadata_split[i] == 1]).astype(np.int64)
     print("Validation data:", val_data_np.shape, val_data_np_targets.shape)
     
     train_data_np = np.stack([loss_vals_np[i] for i in range(len(loss_vals_np)) if metadata_split[i] == 0], axis=0).astype(np.float32)
-    train_data_np_targets = np.array([label_map[(metadata_target[i], metadata_attrib[i])] for i in range(len(loss_vals_np)) if metadata_split[i] == 0]).astype(np.int64)
+    train_data_np_targets = np.array([metadata_spurious[i] for i in range(len(loss_vals_np)) if metadata_split[i] == 0]).astype(np.int64)
     print("Training data:", train_data_np.shape, train_data_np_targets.shape)
     
     n_neighbors = 20
@@ -176,8 +192,8 @@ def main(args):
             train_probs_df["confidence"] = (train_probs_df["toxicity"] >= 0.5) * train_probs_df["probs_1"] + (train_probs_df["toxicity"] < 0.5)  * train_probs_df["probs_0"]
     
     train_probs_df[f"confidence_thres{args.conf_threshold}"] = (train_probs_df["confidence"] < args.conf_threshold).apply(np.int64)
-    if dataset == 'CelebA':
-        assert(np.sum(train_probs_df[f"confidence_thres{args.conf_threshold}"] != train_probs_df["wrong_1_times"]) == 0)
+    # if dataset == 'CelebA':
+    #     assert(np.sum(train_probs_df[f"confidence_thres{args.conf_threshold}"] != train_probs_df["wrong_1_times"]) == 0)
     
     # Save csv into new dir for the run, and generate downstream runs
     if not os.path.exists(f"results/{dataset}/{exp_name}/train_downstream_{folder_name}/final_epoch{final_epoch}"):
