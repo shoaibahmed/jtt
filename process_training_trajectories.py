@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np 
 
 import sklearn.neighbors
+from sklearn.metrics import RocCurveDisplay
 
 import matplotlib.pyplot as plt
 from scipy.special import softmax
@@ -120,9 +121,15 @@ def main(args):
     clf = sklearn.neighbors.KNeighborsClassifier(n_neighbors)
     clf.fit(val_data_np, val_data_np_targets)
     
-    prediction = clf.predict(train_data_np)  # 0: Majority group; 1: Minority group
+    assert 0. < args.conf_threshold_traj < 1., args.conf_threshold_traj
+    prediction_probs = clf.predict_proba(train_data_np)  # 0: Majority group; 1: Minority group
+    # prediction = np.argmax(prediction_probs, axis=1)
+    prediction = prediction_probs[:, 1] > args.conf_threshold_traj
+    print(f"Probs shape: {prediction_probs.shape} / Prediction shape: {prediction.shape} / Confidence thresh: {args.conf_threshold_traj}")
+    
     assert len(train_df) == len(prediction), f"{len(train_df)} != {len(prediction)}"
     train_df["wrong_1_times"] = prediction.astype(np.int64)
+    train_df["wrong_1_times_prob"] = prediction_probs[:, 1].astype(np.float32)  # Prob for class minority
     print("Total minority", np.sum(train_df['wrong_1_times']), "Total points", len(train_df))
     
     # Merge with original features (could be optional)
@@ -175,6 +182,7 @@ def main(args):
     
     # Find confidence (just in case doing threshold)
     if dataset == "MultiNLI":
+        raise NotImplementedError
         probs = softmax(np.array(train_probs_df[[f"pred_prob_None_epoch_{final_epoch}_val_0", f"pred_prob_None_epoch_{final_epoch}_val_1", f"pred_prob_None_epoch_{final_epoch}_val_2"]]), axis = 1)
         train_probs_df["probs_0"] = probs[:,0]
         train_probs_df["probs_1"] = probs[:,1]
@@ -182,14 +190,17 @@ def main(args):
         train_probs_df["confidence"] = (train_probs_df['gold_label']==0) * train_probs_df["probs_0"] + (train_probs_df['gold_label']==1) * train_probs_df["probs_1"] + (train_probs_df['gold_label']==2) * train_probs_df["probs_2"]
     else:
         probs = softmax(np.array(train_probs_df[[f"pred_prob_None_epoch_{final_epoch}_val_0", f"pred_prob_None_epoch_{final_epoch}_val_1"]]), axis = 1)
-        train_probs_df["probs_0"] = probs[:,0]
-        train_probs_df["probs_1"] = probs[:,1]
+        # train_probs_df["probs_0"] = probs[:,0]
+        # train_probs_df["probs_1"] = probs[:,1]
+        train_probs_df["probs_0"] = prediction_probs[:,0]
+        train_probs_df["probs_1"] = prediction_probs[:,1]
         if dataset == 'CelebA':
             train_probs_df["confidence"] = train_probs_df["Blond_Hair"] * train_probs_df["probs_1"] + (1 - train_probs_df["Blond_Hair"]) * train_probs_df["probs_0"]
         elif dataset == 'CUB':
             train_probs_df["confidence"] = train_probs_df["y"] * train_probs_df["probs_1"] + (1 - train_probs_df["y"]) * train_probs_df["probs_0"]
         elif dataset == 'jigsaw':
             train_probs_df["confidence"] = (train_probs_df["toxicity"] >= 0.5) * train_probs_df["probs_1"] + (train_probs_df["toxicity"] < 0.5)  * train_probs_df["probs_0"]
+        # train_probs_df["confidence"] = train_probs_df["wrong_1_times"].apply(np.float32)
     
     train_probs_df[f"confidence_thres{args.conf_threshold}"] = (train_probs_df["confidence"] < args.conf_threshold).apply(np.int64)
     # if dataset == 'CelebA':
@@ -199,6 +210,10 @@ def main(args):
     if not os.path.exists(f"results/{dataset}/{exp_name}/train_downstream_{folder_name}/final_epoch{final_epoch}"):
         os.makedirs(f"results/{dataset}/{exp_name}/train_downstream_{folder_name}/final_epoch{final_epoch}")
     root = f"results/{dataset}/{exp_name}/train_downstream_{folder_name}/final_epoch{final_epoch}"
+    
+    # Plot the ROC curve
+    RocCurveDisplay.from_predictions(merged_csv["spurious"], merged_csv["wrong_1_times_prob"])
+    plt.savefig(os.path.join(root, "roc_curve.png"), dpi=300, box_inches="tight")
 
     train_probs_df.to_csv(f"{root}/metadata_aug.csv")
     root = f"{exp_name}/train_downstream_{folder_name}/final_epoch{final_epoch}"
@@ -226,6 +241,7 @@ if __name__ == "__main__":
     parser.add_argument("--weight_decay", type=float, default=0.1)
     parser.add_argument("--deploy", action="store_true", default=False)
     parser.add_argument("--conf_threshold", type=float, default=0.5)
+    parser.add_argument("--conf_threshold_traj", type=float, default=0.80)
     parser.add_argument("--aug_col", type=str, default='wrong_1_times')
     parser.add_argument("--exp_name", type=str, required=True)
     parser.add_argument("--folder_name", type=str, required=True)
