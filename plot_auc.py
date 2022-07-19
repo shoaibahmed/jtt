@@ -218,6 +218,7 @@ def main(args):
     root = f"results/{dataset}/{exp_name}/train_downstream_{folder_name}/final_epoch{final_epoch}"
     
     # Plot the ROC curve
+    fontsize = 15
     fig, ax = plt.subplots(1, 1, figsize=(6, 5))
     mpl.rcParams['lines.linewidth'] = 3
     plt.rcParams['axes.prop_cycle'] = cycler(alpha=[0.5])
@@ -228,11 +229,14 @@ def main(args):
     # out2.line_.set_linewidth(3.)
     # out.line_.alpha = 0.8
     # plt.savefig(os.path.join(root, "roc_curve.png"), dpi=300, bbox_inches="tight")
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--")
+    plt.xlabel("False Positive Rate", fontsize=fontsize)
+    plt.ylabel("True Positive Rate", fontsize=fontsize)
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.legend(prop={'size': fontsize})
+    plt.plot([0, 1], [0, 1], color="gray", lw=2, linestyle="--", alpha=0.5)
     plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
+    plt.ylim([0.0, 1.0])
     plt.tight_layout()
     plt.savefig(f"roc_curve_{args.dataset.lower()}.png", dpi=300, bbox_inches="tight")
 
